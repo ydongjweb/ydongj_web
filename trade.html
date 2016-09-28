@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>交易汇总</title>
+	<link rel="stylesheet" href="http://cdn.bootcss.com/bootstrap/3.3.0/css/bootstrap.min.css">
+	<link rel="stylesheet" href="css/jquery-ui.min.css">
+	<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+	<div class="container">
+		<header>支付金额汇总</header>
+		<div class="form-inline" role="form">
+			<button data-v='1' class="btn btn-day btn-default btn-info">今天</button>
+			<button data-v='2' class="btn btn-day btn-default">昨天</button>
+			<button data-v='3' class="btn btn-day btn-default">近一周</button>
+			<button data-v='4' class="btn btn-day btn-default">近一月</button>
+		    <input type="text" class="form-control date-input" id="dateStart">
+			至
+		    <input type="text" class="form-control date-input" id="dateEnd">
+			<button class="btn btn-default" id="queryBtn">查询</button>
+		</div>
+		<div class="summary-info">
+			总支付商户数<span id="storeCount"></span>位，
+			共支付<span id="orderCount"></span>笔，
+			共支付<span id="sumAmount"></span>元
+		</div>
+		<div id="main" class="chart" style="width: 600px;height:400px;"></div>
+		<div class="table-container">
+			<table id="detailTable" class="table table-bordered"></table>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="js/jquery-3.1.0.min.js"></script>
+	<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+	<script src="http://cdn.bootcss.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+	<script src="js/echarts.min.js"></script>
+	<script src="js/common.js"></script>
+	<script>
+
+	var startDate = new Date().Format('yyyy-MM-dd'),
+		endDate = addDate(new Date(), 1),
+		timeCommon = ' 00:00:00',
+		myChart = '';
+
+	$('.btn-day, #queryBtn').on('click', function() {
+		var now = new Date(),
+			v = $(this).data('v');
+
+		switch(v) {
+			case 1 : 
+				startDate = now.Format('yyyy-MM-dd');
+				endDate = addDate(now, 1);
+				break;
+			case 2 : 
+				startDate = addDate(now, -1);
+				endDate = now.Format('yyyy-MM-dd');
+				break;
+			case 3 : 
+				startDate = addDate(now, -7);
+				endDate = now.Format('yyyy-MM-dd');
+				break;
+			case 4 : 
+				startDate = addDate(now, -30);
+				endDate = now.Format('yyyy-MM-dd');
+				break;
+			default: 
+				startDate = $('#dateStart').val();
+				endDate = $('#dateEnd').val();
+		}
+
+		$('#dateStart').val(startDate);
+		$('#dateEnd').val(endDate);
+		$(this).addClass('btn-info').siblings().removeClass('btn-info');
+
+		var ajaxData = {
+			"beginTime": startDate + timeCommon,
+    		"endTime": endDate + timeCommon
+		};
+		queryTrade(startDate, endDate);
+	})
+
+	function queryTrade(start, end) {
+		var ajaxData = {
+			"beginTime": start + timeCommon,
+    		"endTime": end + timeCommon
+		};
+		getByAjax({
+			url: 'api/trade/line',
+			data: JSON.stringify(ajaxData),
+			success: function(data) {
+				console.info(data);
+				if (data.code == 1) {
+					rendData(data.datas);
+				}
+			}
+		})
+	}
+
+	
+
+	var colorArray = ['#f96a32', '#0b96d1', '#75c669', '#ffce35'];
+	var typeData = [];
+    var dateData = [];
+    var lineArray = [];
+	function rendData(data) {
+		typeData = [];
+        dateData = [];
+        lineArray = [];
+	var option = {
+		    title: {
+		        text: '金额'
+		    },
+		    tooltip: {
+		        trigger: 'axis'
+		    },
+		    legend: {
+		        y: 370,
+		        padding: 10,
+		    },
+		    grid: {
+		        left: '3%',
+		        right: '4%',
+		        bottom: '10%',
+		        containLabel: true
+		    },
+		    toolbox: {
+		        feature: {
+		            // saveAsImage: {}
+		        }
+		    },
+		    xAxis: {
+		        type: 'category',
+		        boundaryGap: false
+		    },
+		    yAxis: {
+		        type: 'value'
+		    },
+		    series: []
+		};
+		if (data.summary) { // 汇总数据
+			$("#storeCount").html(data.summary.storeCount);
+		    $("#orderCount").html(data.summary.orderCount);
+		    $("#sumAmount").html(data.summary.sumAmount);
+		}
+		if (data.detail) {
+			var thHtml = '<thead><tr><th></th>', 
+				t1Html = '<tr><td class="f-bold">金额</td>',
+				t2Html = '<tr><td class="f-bold">商户交易数</td>',
+				t3Html = '<tr><td class="f-bold">支付笔数</td>',
+				tbody = '';
+			for (var i = 0, len = data.detail.length; i < len; i++) {
+				var item = data.detail[i];
+				thHtml += '<th>' + item.typeName + '</th>';
+				t1Html += '<td>' + item.sumAmount + '</td>';
+				t2Html += '<td>' + item.storeCount + '</td>';
+				t3Html += '<td>' + item.orderCount + '</td>';
+			}
+			thHtml += '</tr>';
+			t1Html += '</tr>';
+			t2Html += '</tr>';
+			t3Html += '</tr>';
+			tbody = thHtml + '</thead><tbody>' + t1Html + t2Html + t3Html + '</tbody>';
+			$('#detailTable').html(tbody);
+		}
+
+        for (var p in data.line) {
+        	var item = data.line[p];
+        	for (var i = 0, length = data.detail.length; i < length; i++) {
+        		var detailItem = data.detail[i];
+        		if (detailItem.type == p) {
+        			typeData.push(detailItem.typeName);
+        			break;
+        		}
+        	}
+        	var itemArray = [];
+        	for (var i = 0, length = item.length; i < length; i++) {
+        		itemArray.push(item[i].amount);
+        		if (dateData.length <= length) {
+        			dateData.push(item[i].time);
+        		}
+        	}
+        	lineArray.push(itemArray);
+        }
+        option.legend.data = typeData;
+        option.xAxis.data = dateData;
+        for (var i = 0, length = lineArray.length; i < length; i++) {
+        	var obj =  {
+	            name: typeData[i],
+	            type:'line',
+	            stack: '总量',
+	            data: lineArray[i],
+	            itemStyle: {
+	            	normal: {
+            			color: colorArray[i%4],
+	            	}
+	            }
+	        };
+
+	        option.series.push(obj);
+        }
+        if (!!myChart) {
+        	myChart.dispose();
+        }
+        myChart = echarts.init(document.getElementById('main'));
+		myChart.setOption(option, true);
+	}
+
+	window.onload = function() {
+		queryTrade(startDate, endDate);
+		initCommon();
+	}
+
+	
+
+	
+	</script>
+</body>
+</html>
