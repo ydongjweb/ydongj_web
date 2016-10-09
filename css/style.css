@@ -68,6 +68,8 @@ header {
   height: 100%;
 }
 .map-container .container #imap {
-  height: 500px;
+  height: 480px;
   width: 60%;
+  margin-top: 2rem;
+  color: #F26E01;
 }

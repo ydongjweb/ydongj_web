@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<link rel="stylesheet" href="http://cdn.bootcss.com/bootstrap/3.3.0/css/bootstrap.min.css">
+	<link rel="stylesheet" href="css/jquery-ui.min.css">
+	<link rel="stylesheet" href="css/style.css">
+	<title>门店地理位置</title>
+</head>
+<body class="map-container">
+	<div class="container">
+		<header>门店使用图</header>
+		<div class="form-inline" role="form">
+			<button data-v='1' class="btn btn-day btn-default btn-info">今天</button>
+			<button data-v='2' class="btn btn-day btn-default">昨天</button>
+			<button data-v='3' class="btn btn-day btn-default">近一周</button>
+			<button data-v='4' class="btn btn-day btn-default">近一月</button>
+		    <input type="text" class="form-control date-input" id="dateStart" readonly="readonly">
+			至
+		    <input type="text" class="form-control date-input" id="dateEnd" readonly="readonly">
+			<button class="btn btn-default" id="queryBtn">查询</button>
+		</div>
+		<div id="imap"></div>
+		
+	</div>
+	
+	<script src="js/jquery-3.1.0.min.js"></script>
+	<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+	<script src="http://cdn.bootcss.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+	<script src="js/common.js"></script>
+	<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=Pe2bpfL1ct54kQLPZjGvzzRqIgKA7Kda"></script>
+	<script type="text/javascript">
+
+	var startDate = endDate = new Date().Format('yyyy-MM-dd'),
+		timeCommon = ' 00:00:00',
+		type = 1;
+
+	$('.btn-day, #queryBtn').on('click', function() {
+		var now = new Date(),
+			v = $(this).data('v');
+		type = v;
+
+		switch(v) {
+			case 1 : 
+				startDate = now.Format('yyyy-MM-dd');
+				endDate = addDate(now, 1);
+				break;
+			case 2 : 
+				startDate = endDate = addDate(now, -1);
+				break;
+			case 3 : 
+				startDate = addDate(now, -7);
+				endDate = now.Format('yyyy-MM-dd');
+				break;
+			case 4 : 
+				startDate = addDate(now, -30);
+				endDate = now.Format('yyyy-MM-dd');
+				break;
+			default: 
+				startDate = $('#dateStart').val();
+				endDate = $('#dateEnd').val();
+		}
+
+		$('#dateStart').val(startDate);
+		$('#dateEnd').val(endDate);
+		$(this).addClass('btn-info').siblings().removeClass('btn-info');
+		// queryTrade(startDate, endDate, v);
+	})
+
+	// 百度地图API功能	
+	map = new BMap.Map("imap");
+	map.centerAndZoom(new BMap.Point(116.417854,39.921988), 15);
+	map.enableScrollWheelZoom(true);
+
+	function getPoint() {
+		getByAjax({
+			url: 'api/address/store',
+			type: 'GET',
+			success: function(data) {
+				console.info(data);
+				if (data.code == 1) {
+					for(var i = 0, len = data.datas.length; i < len; i++){
+						var item = data.datas[i];
+						var marker = new BMap.Marker(new BMap.Point(item.longitude,item.latitude));  // 创建标注
+						map.addOverlay(marker);               // 将标注添加到地图中
+						addClickHandler(item, marker);
+					}
+				}
+			}
+		})
+	}
+	getPoint();
+
+	var opts = {
+		width : 250,     // 信息窗口宽度
+		height: 80,     // 信息窗口高度
+		title : "" , // 信息窗口标题
+		enableMessage:false//设置允许信息窗发送短息
+	};
+	
+	function addClickHandler(objItem, marker){
+		marker.addEventListener("click",function(e){
+			var ajaxData = '';
+			if (type == 1 || type == 2) {
+				ajaxData = {
+					"beginTime": startDate,
+		    		"endTime": endDate,
+		    		"storeId": objItem.storeId
+				};
+			} else {
+				ajaxData = {
+					"beginTime": startDate + timeCommon,
+		    		"endTime": endDate + timeCommon,
+		    		"storeId": objItem.storeId
+				};
+			}
+
+			getByAjax({
+				url: 'api/trade/store',
+				data: JSON.stringify(ajaxData),
+				success: function(data) {
+					console.info(data);
+					if (data.code == 1) {
+						var content = '地址: ' + objItem.address + '<br> 订单数: ' + data.datas.orderCount + ' <br> 交易金额: ' + data.datas.sumAmount,
+							span = '<span style="color:#F26E01">' + content + '</span>';
+						openInfo(span,e);
+					}
+				}
+			})
+		});
+	}
+	function openInfo(content,e){
+		var p = e.target;
+		var point = new BMap.Point(p.getPosition().lng, p.getPosition().lat);
+		var infoWindow = new BMap.InfoWindow(content,opts);  // 创建信息窗口对象 
+		map.openInfoWindow(infoWindow,point); //开启信息窗口
+	}
+</script>
+</body>
+</html>
+

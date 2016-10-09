@@ -71,11 +71,6 @@
 		$('#dateStart').val(startDate);
 		$('#dateEnd').val(endDate);
 		$(this).addClass('btn-info').siblings().removeClass('btn-info');
-
-		var ajaxData = {
-			"beginTime": startDate + timeCommon,
-    		"endTime": endDate + timeCommon
-		};
 		queryTrade(startDate, endDate, v);
 	})
 
