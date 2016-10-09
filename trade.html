@@ -2,6 +2,7 @@
 <html>
 <head>
 	<meta charset="UTF-8">
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 	<title>交易汇总</title>
 	<link rel="stylesheet" href="http://cdn.bootcss.com/bootstrap/3.3.0/css/bootstrap.min.css">
 	<link rel="stylesheet" href="css/jquery-ui.min.css">
@@ -15,9 +16,9 @@
 			<button data-v='2' class="btn btn-day btn-default">昨天</button>
 			<button data-v='3' class="btn btn-day btn-default">近一周</button>
 			<button data-v='4' class="btn btn-day btn-default">近一月</button>
-		    <input type="text" class="form-control date-input" id="dateStart">
+		    <input type="text" class="form-control date-input" id="dateStart" readonly="readonly">
 			至
-		    <input type="text" class="form-control date-input" id="dateEnd">
+		    <input type="text" class="form-control date-input" id="dateEnd" readonly="readonly">
 			<button class="btn btn-default" id="queryBtn">查询</button>
 		</div>
 		<div class="summary-info">
@@ -25,7 +26,7 @@
 			共支付<span id="orderCount"></span>笔，
 			共支付<span id="sumAmount"></span>元
 		</div>
-		<div id="main" class="chart" style="width: 600px;height:400px;"></div>
+		<div id="main" class="chart" style="width: 700px;height:400px;"></div>
 		<div class="table-container">
 			<table id="detailTable" class="table table-bordered"></table>
 		</div>
@@ -38,8 +39,7 @@
 	<script src="js/common.js"></script>
 	<script>
 
-	var startDate = new Date().Format('yyyy-MM-dd'),
-		endDate = addDate(new Date(), 1),
+	var startDate = endDate = new Date().Format('yyyy-MM-dd'),
 		timeCommon = ' 00:00:00',
 		myChart = '';
 
@@ -53,8 +53,7 @@
 				endDate = addDate(now, 1);
 				break;
 			case 2 : 
-				startDate = addDate(now, -1);
-				endDate = now.Format('yyyy-MM-dd');
+				startDate = endDate = addDate(now, -1);
 				break;
 			case 3 : 
 				startDate = addDate(now, -7);
@@ -77,14 +76,23 @@
 			"beginTime": startDate + timeCommon,
     		"endTime": endDate + timeCommon
 		};
-		queryTrade(startDate, endDate);
+		queryTrade(startDate, endDate, v);
 	})
 
-	function queryTrade(start, end) {
-		var ajaxData = {
-			"beginTime": start + timeCommon,
-    		"endTime": end + timeCommon
-		};
+	function queryTrade(start, end, type) {
+		var ajaxData = '';
+		if (type == 1 || type == 2) {
+			ajaxData = {
+				"beginTime": start,
+	    		"endTime": end
+			};
+		} else {
+			ajaxData = {
+				"beginTime": start + timeCommon,
+	    		"endTime": end + timeCommon
+			};
+		}
+		
 		getByAjax({
 			url: 'api/trade/line',
 			data: JSON.stringify(ajaxData),
@@ -96,8 +104,6 @@
 			}
 		})
 	}
-
-	
 
 	var colorArray = ['#f96a32', '#0b96d1', '#75c669', '#ffce35'];
 	var typeData = [];
@@ -119,15 +125,10 @@
 		        padding: 10,
 		    },
 		    grid: {
-		        left: '3%',
-		        right: '4%',
+		        left: '5%',
+		        right: '6%',
 		        bottom: '10%',
 		        containLabel: true
-		    },
-		    toolbox: {
-		        feature: {
-		            // saveAsImage: {}
-		        }
 		    },
 		    xAxis: {
 		        type: 'category',
@@ -206,7 +207,7 @@
 	}
 
 	window.onload = function() {
-		queryTrade(startDate, endDate);
+		queryTrade(startDate, endDate, 1);
 		initCommon();
 	}
 

@@ -28,7 +28,7 @@ function getByAjax(obj) {
     $.ajax({
     	url: ajaxUrl,
     	contentType: 'application/json',
-    	type: 'POST',
+    	type: obj.type ? obj.type : 'POST',
     	data: obj.data,
     	dataType: 'json',
     	success: function(data) {
