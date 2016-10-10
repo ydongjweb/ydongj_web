@@ -21,7 +21,21 @@
 		    <input type="text" class="form-control date-input" id="dateEnd" readonly="readonly">
 			<button class="btn btn-default" id="queryBtn">查询</button>
 		</div>
-		<div id="imap"></div>
+		<div class="flex-block">
+			<div class="flex-l">
+				<div id="imap"></div>
+			</div>
+			<div class="flex-r">
+				<div class="pannel-info">
+					<p>今日实时销售总额（元）</p>
+					<div class="sumAmount-block"></div>
+				</div>	
+				<div class="pannel-info">
+					<p>今日实时交易笔数（笔）</p>
+					<div class="orderCount-block"></div>
+				</div>			
+			</div>
+		</div>
 		
 	</div>
 	
@@ -65,20 +79,25 @@
 		$('#dateStart').val(startDate);
 		$('#dateEnd').val(endDate);
 		$(this).addClass('btn-info').siblings().removeClass('btn-info');
-		// queryTrade(startDate, endDate, v);
 	})
 
 	// 百度地图API功能	
 	map = new BMap.Map("imap");
-	map.centerAndZoom(new BMap.Point(116.417854,39.921988), 15);
+	map.centerAndZoom(new BMap.Point(114.057195,22.596458), 10);
 	map.enableScrollWheelZoom(true);
+	var top_left_navigation = new BMap.NavigationControl();  //左上角，添加默认缩放平移控件
+	var size = new BMap.Size(10, 20);
+	map.addControl(new BMap.CityListControl({
+	    anchor: BMAP_ANCHOR_TOP_RIGHT,
+	    offset: size,
+	}));
+	map.addControl(top_left_navigation);
 
 	function getPoint() {
 		getByAjax({
 			url: 'api/address/store',
 			type: 'GET',
 			success: function(data) {
-				console.info(data);
 				if (data.code == 1) {
 					for(var i = 0, len = data.datas.length; i < len; i++){
 						var item = data.datas[i];
@@ -90,7 +109,6 @@
 			}
 		})
 	}
-	getPoint();
 
 	var opts = {
 		width : 250,     // 信息窗口宽度
@@ -120,7 +138,6 @@
 				url: 'api/trade/store',
 				data: JSON.stringify(ajaxData),
 				success: function(data) {
-					console.info(data);
 					if (data.code == 1) {
 						var content = '地址: ' + objItem.address + '<br> 订单数: ' + data.datas.orderCount + ' <br> 交易金额: ' + data.datas.sumAmount,
 							span = '<span style="color:#F26E01">' + content + '</span>';
@@ -135,6 +152,64 @@
 		var point = new BMap.Point(p.getPosition().lng, p.getPosition().lat);
 		var infoWindow = new BMap.InfoWindow(content,opts);  // 创建信息窗口对象 
 		map.openInfoWindow(infoWindow,point); //开启信息窗口
+	}
+
+	function getTodayTrade() {
+		var ajaxData = {
+			"beginTime": new Date().Format('yyyy-MM-dd'),
+    		"endTime": new Date().Format('yyyy-MM-dd'),
+		};
+		getByAjax({
+			url: 'api/trade/summary',
+			data: JSON.stringify(ajaxData),
+			success: function(data) {
+				if (data.code == 1) {
+					rendTradeData(data.datas);
+				}
+			}
+		})
+
+		function rendTradeData(data) {
+			var sumAmount = 0,
+				orderCount = 0,
+				sumAmountHtml = '',
+				orderCountHtml = '';
+
+			if (data) {
+				sumAmount = '' + Math.round(data.sumAmount);
+				sumAmountHtml = '<span class="span-li">'
+				if (sumAmount.length > 0) {
+					for (var i = 0, len = sumAmount.length; i < len; i++) {
+						if (i%3 == 0 && i != 0) {
+							sumAmountHtml += '</span><span class="span-li">'
+						}
+						sumAmountHtml += '<span>' + sumAmount[i] + '</span>';
+					}
+				}
+				sumAmountHtml += '</span>';
+
+				orderCount = '' + Math.round(data.orderCount);
+				orderCountHtml = '<span class="span-li">'
+				if (orderCount.length > 0) {
+					for (var i = 0, len = orderCount.length; i < len; i++) {
+						if (i%3 == 0 && i != 0) {
+							orderCountHtml += '</span><span class="span-li">'
+						}
+						orderCountHtml += '<span>' + orderCount[i] + '</span>';
+					}
+				}
+				orderCountHtml += '</span>';
+
+				$('.sumAmount-block').html(sumAmountHtml);
+				$('.orderCount-block').html(orderCountHtml);
+			}
+		}
+	}
+
+	window.onload = function() {
+		initCommon()
+		getTodayTrade();
+		getPoint();
 	}
 </script>
 </body>

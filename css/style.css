@@ -69,7 +69,33 @@ header {
 }
 .map-container .container #imap {
   height: 480px;
-  width: 60%;
+  width: 100%;
   margin-top: 2rem;
   color: #F26E01;
+}
+.map-container .container .flex-block {
+  display: flex;
+  flex-wrap: nowrap;
+}
+.map-container .container .flex-block .flex-l {
+  width: 65%;
+}
+.map-container .container .flex-block .flex-r {
+  width: 35%;
+  align-self: center;
+  padding-left: 2rem;
+}
+.map-container .container .flex-block .flex-r .pannel-info {
+  margin-bottom: 2.5rem;
+}
+.map-container .container .flex-block .flex-r .pannel-info p {
+  font-weight: bold;
+  padding-bottom: .5rem;
+}
+.map-container .container .flex-block .flex-r .pannel-info .span-li {
+  margin-right: .5rem;
+}
+.map-container .container .flex-block .flex-r .pannel-info .span-li span {
+  background-color: #78D4ED;
+  padding: 10px;
 }

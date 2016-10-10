@@ -14,9 +14,6 @@ function initCommon() {
     }).val(str);
 }
 
-
-
-
 function getByAjax(obj) {
     var ajaxUrl = '';
 
