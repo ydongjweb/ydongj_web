@@ -34,7 +34,8 @@
 
 	var startDate = endDate = new Date().Format('yyyy-MM-dd'),
 		timeCommon = ' 00:00:00',
-		type = 1;
+		type = 1,
+		timer = null;
 
 	$('.btn-day, #queryBtn').on('click', function() {
 		var now = new Date(),
@@ -246,6 +247,15 @@
 		initCommon()
 		getSummaryTrade();
 		getPoint();
+
+		var timerNow = new Date().Format('yyyy-MM-dd hh:mm:ss');
+		$('.custom-footer span').html(timerNow);
+
+		timer = setInterval(function() {
+			var timerNow = new Date().Format('yyyy-MM-dd hh:mm:ss');
+			$('.custom-footer span').html(timerNow);
+			getSummaryTrade();
+		}, 1000*60)
 	}
 </script>
 </body>
