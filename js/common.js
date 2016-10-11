@@ -1,5 +1,5 @@
 var App = {
-    testHost: 'http://data.ydongj.com/ydj/',//'http://106.75.138.89:9100/ydj/',
+    testHost: 'http://data.ydongj.com/ydj/', //'http://106.75.138.89:9100/ydj/',
     host: 'http://data.ydongj.com/ydj/',
 }
 
@@ -8,7 +8,7 @@ function initCommon() {
     var str = now.Format('yyyy-MM-dd');
     $('.date-input').datepicker({
         'dateFormat': 'yy-mm-dd',
-        'monthNames': ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'],
+        'monthNames': ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'],
         'dayNamesMin': ['日', '一', '二', '三', '四', '五', '六'],
         'dayNames': ['日', '一', '二', '三', '四', '五', '六'],
     }).val(str);
@@ -23,18 +23,36 @@ function getByAjax(obj) {
         ajaxUrl = App.host + obj.url;
     }
     $.ajax({
-    	url: ajaxUrl,
-    	contentType: 'application/json',
-    	type: obj.type ? obj.type : 'POST',
-    	data: obj.data,
-    	dataType: 'json',
-    	success: function(data) {
-    		obj.success && obj.success(data);
-    	},
-    	error: function(err) {
-    		obj.error && obj.error(err);
-    	}
+        url: ajaxUrl,
+        contentType: 'application/json',
+        type: obj.type ? obj.type : 'POST',
+        data: obj.data,
+        dataType: 'json',
+        success: function(data) {
+            obj.success && obj.success(data);
+        },
+        error: function(err) {
+            obj.error && obj.error(err);
+        }
     })
+}
+
+var EventEmitter = {
+    _events: {},
+    dispatch: function(event, data) {
+        if (!this._events[event]) return; // no one is listening to this event
+        for (var i = 0; i < this._events[event].length; i++)
+            this._events[event][i](data);
+    },
+    subscribe: function(event, callback) {
+        if (!this._events[event]) this._events[event] = []; // new event
+        this._events[event].push(callback);
+    },
+    unSubscribe: function(event) {
+        if (this._events && this._events[event]) {
+            delete this._events[event];
+        }
+    }
 }
 
 function addDate(date, days) {
@@ -65,4 +83,27 @@ Date.prototype.Format = function(fmt) { //author: meizz
         if (new RegExp("(" + k + ")").test(fmt))
             fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
     return fmt;
+}
+
+/**  
+ * 将数值四舍五入(保留2位小数)后格式化成金额形式  
+ *  
+ * @param num 数值(Number或者String)  
+ * @return 金额格式的字符串,如'1,234,567.45'  
+ * @type String  
+ */
+function formatCurrency(num) {
+    num = num.toString().replace(/\$|\,/g, '');
+    if (isNaN(num))
+        num = "0";
+    sign = (num == (num = Math.abs(num)));
+    num = Math.floor(num * 100 + 0.50000000001);
+    cents = num % 100;
+    num = Math.floor(num / 100).toString();
+    if (cents < 10)
+        cents = "0" + cents;
+    for (var i = 0; i < Math.floor((num.length - (1 + i)) / 3); i++)
+        num = num.substring(0, num.length - (4 * i + 3)) + ',' +
+        num.substring(num.length - (4 * i + 3));
+    return (((sign) ? '' : '-') + num + '.' + cents);
 }

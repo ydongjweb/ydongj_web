@@ -73,29 +73,30 @@ header {
   margin-top: 2rem;
   color: #F26E01;
 }
-.map-container .container .flex-block {
-  display: flex;
-  flex-wrap: nowrap;
+.map-container .container #imap .custom-block {
+  background-color: #74D3E7;
+  padding: 2px 10px 10px;
+  color: #fff;
+  line-height: 20px;
 }
-.map-container .container .flex-block .flex-l {
-  width: 65%;
+.map-container .container #imap .custom-block p {
+  margin: 0;
 }
-.map-container .container .flex-block .flex-r {
-  width: 35%;
-  align-self: center;
-  padding-left: 2rem;
+.map-container .container #imap .custom-block .custom-pannel {
+  border-width: 0 0 1px 0;
+  padding: 5px;
+  margin: 0 0 5px;
+  border-style: solid;
+  border-color: #fff;
+  text-align: left;
+  font-size: 10px;
 }
-.map-container .container .flex-block .flex-r .pannel-info {
-  margin-bottom: 2.5rem;
-}
-.map-container .container .flex-block .flex-r .pannel-info p {
+.map-container .container #imap .custom-block .custom-pannel .custom-text {
+  font-size: 16px;
   font-weight: bold;
-  padding-bottom: .5rem;
+  text-align: center;
 }
-.map-container .container .flex-block .flex-r .pannel-info .span-li {
-  margin-right: .5rem;
-}
-.map-container .container .flex-block .flex-r .pannel-info .span-li span {
-  background-color: #78D4ED;
-  padding: 10px;
+.map-container .container #imap .custom-block .custom-footer {
+  font-size: 8px;
+  color: #258BA1;
 }

@@ -21,21 +21,7 @@
 		    <input type="text" class="form-control date-input" id="dateEnd" readonly="readonly">
 			<button class="btn btn-default" id="queryBtn">查询</button>
 		</div>
-		<div class="flex-block">
-			<div class="flex-l">
-				<div id="imap"></div>
-			</div>
-			<div class="flex-r">
-				<div class="pannel-info">
-					<p>今日实时销售总额（元）</p>
-					<div class="sumAmount-block"></div>
-				</div>	
-				<div class="pannel-info">
-					<p>今日实时交易笔数（笔）</p>
-					<div class="orderCount-block"></div>
-				</div>			
-			</div>
-		</div>
+		<div id="imap"></div>
 		
 	</div>
 	
@@ -79,19 +65,87 @@
 		$('#dateStart').val(startDate);
 		$('#dateEnd').val(endDate);
 		$(this).addClass('btn-info').siblings().removeClass('btn-info');
+		rendQuery();
 	})
 
+	function rendQuery() {
+		var nowStoreId = $('.BMap_bubble_content').find('.marker-span').data('sid');
+		var ajaxData = '';
+		if (type == 1 || type == 2) {
+			ajaxData = {
+				"beginTime": startDate,
+	    		"endTime": endDate,
+	    		"storeId": nowStoreId
+			};
+		} else {
+			ajaxData = {
+				"beginTime": startDate + timeCommon,
+	    		"endTime": endDate + timeCommon,
+	    		"storeId": nowStoreId
+			};
+		}
+
+		getByAjax({
+			url: 'api/trade/store',
+			data: JSON.stringify(ajaxData),
+			success: function(data) {
+				if (data.code == 1) {
+					$('.BMap_bubble_content .marker-orderCount').html(data.datas.orderCount);
+					$('.BMap_bubble_content .marker-sumAmount').html('￥' + formatCurrency(data.datas.sumAmount));
+				}
+			}
+		})
+
+		getSummaryTrade();
+	}
+
 	// 百度地图API功能	
-	map = new BMap.Map("imap");
-	map.centerAndZoom(new BMap.Point(114.057195,22.596458), 10);
+	var map = new BMap.Map("imap");
+	map.centerAndZoom(new BMap.Point(102.954, 34.340), 5);
 	map.enableScrollWheelZoom(true);
-	var top_left_navigation = new BMap.NavigationControl();  //左上角，添加默认缩放平移控件
-	var size = new BMap.Size(10, 20);
+	var size = new BMap.Size(5, 5);
 	map.addControl(new BMap.CityListControl({
-	    anchor: BMAP_ANCHOR_TOP_RIGHT,
+	    anchor: BMAP_ANCHOR_TOP_LEFT,
 	    offset: size,
 	}));
-	map.addControl(top_left_navigation);
+	map.addControl(new BMap.NavigationControl({
+		anchor: BMAP_ANCHOR_TOP_RIGHT,
+		offset: size,
+	}));
+
+	function CustomControl() {
+		this.defaultAnchor = BMAP_ANCHOR_BOTTOM_LEFT;
+	  	this.defaultOffset = new BMap.Size(10, 10);
+	}
+
+	CustomControl.prototype = new BMap.Control();
+	CustomControl.prototype.initialize = function(map) {
+		var div = document.createElement('div');
+		var customHtml = '' + 
+			'<div class="custom-block">'+
+			'	<div class="custom-pannel">' + 
+			'   	<p class="custom-title">总支付金额：</p>' +
+			'   	<p class="custom-text sumAmount-block"></p>' +
+			'	</div>' +
+			'	<div class="custom-pannel">' + 
+			'   	<p class="custom-title">总支付商户数：</p>' +
+			'   	<p class="custom-text storeCount-block"></p>' +
+			'	</div>' +
+			'	<div class="custom-pannel">' + 
+			'   	<p class="custom-title">总支付笔数：</p>' +
+			'   	<p class="custom-text orderCount-block"></p>' +
+			'	</div>' +
+			'	<p class="custom-footer">实时数据更新至 <span>2016-10-10 12:00:00</span></p>'
+			'</div>';
+		div.innerHTML = customHtml;
+		
+		map.getContainer().appendChild(div);
+
+		return div;
+	}
+
+	var myCustomControl = new CustomControl();
+	map.addControl(myCustomControl);
 
 	function getPoint() {
 		getByAjax({
@@ -118,7 +172,8 @@
 	};
 	
 	function addClickHandler(objItem, marker){
-		marker.addEventListener("click",function(e){
+		marker.addEventListener("click", markerHandler);
+		function markerHandler(e){
 			var ajaxData = '';
 			if (type == 1 || type == 2) {
 				ajaxData = {
@@ -139,14 +194,15 @@
 				data: JSON.stringify(ajaxData),
 				success: function(data) {
 					if (data.code == 1) {
-						var content = '地址: ' + objItem.address + '<br> 订单数: ' + data.datas.orderCount + ' <br> 交易金额: ' + data.datas.sumAmount,
-							span = '<span style="color:#F26E01">' + content + '</span>';
+						var content = '地址: ' + objItem.address + '<br> 订单数: <span class="marker-orderCount">' + data.datas.orderCount + '</span> <br> 交易金额: <span class="marker-sumAmount">￥' + formatCurrency(data.datas.sumAmount) + '</span>',
+							span = '<span class="marker-span" data-sid="' + objItem.storeId +'">' + content + '</span>';
 						openInfo(span,e);
 					}
 				}
 			})
-		});
+		}
 	}
+
 	function openInfo(content,e){
 		var p = e.target;
 		var point = new BMap.Point(p.getPosition().lng, p.getPosition().lat);
@@ -154,11 +210,19 @@
 		map.openInfoWindow(infoWindow,point); //开启信息窗口
 	}
 
-	function getTodayTrade() {
-		var ajaxData = {
-			"beginTime": new Date().Format('yyyy-MM-dd'),
-    		"endTime": new Date().Format('yyyy-MM-dd'),
-		};
+	function getSummaryTrade() {
+		var ajaxData = '';
+		if (type == 1 || type == 2) {
+			ajaxData = {
+				"beginTime": startDate,
+	    		"endTime": endDate
+			};
+		} else {
+			ajaxData = {
+				"beginTime": startDate + timeCommon,
+	    		"endTime": endDate + timeCommon
+			};
+		}
 		getByAjax({
 			url: 'api/trade/summary',
 			data: JSON.stringify(ajaxData),
@@ -170,45 +234,17 @@
 		})
 
 		function rendTradeData(data) {
-			var sumAmount = 0,
-				orderCount = 0,
-				sumAmountHtml = '',
-				orderCountHtml = '';
-
 			if (data) {
-				sumAmount = '' + Math.round(data.sumAmount);
-				sumAmountHtml = '<span class="span-li">'
-				if (sumAmount.length > 0) {
-					for (var i = 0, len = sumAmount.length; i < len; i++) {
-						if (i%3 == 0 && i != 0) {
-							sumAmountHtml += '</span><span class="span-li">'
-						}
-						sumAmountHtml += '<span>' + sumAmount[i] + '</span>';
-					}
-				}
-				sumAmountHtml += '</span>';
-
-				orderCount = '' + Math.round(data.orderCount);
-				orderCountHtml = '<span class="span-li">'
-				if (orderCount.length > 0) {
-					for (var i = 0, len = orderCount.length; i < len; i++) {
-						if (i%3 == 0 && i != 0) {
-							orderCountHtml += '</span><span class="span-li">'
-						}
-						orderCountHtml += '<span>' + orderCount[i] + '</span>';
-					}
-				}
-				orderCountHtml += '</span>';
-
-				$('.sumAmount-block').html(sumAmountHtml);
-				$('.orderCount-block').html(orderCountHtml);
+				$('.sumAmount-block').html('￥' + formatCurrency(data.sumAmount));
+				$('.orderCount-block').html(data.orderCount);
+				$('.storeCount-block').html(data.storeCount);
 			}
 		}
 	}
 
 	window.onload = function() {
 		initCommon()
-		getTodayTrade();
+		getSummaryTrade();
 		getPoint();
 	}
 </script>
