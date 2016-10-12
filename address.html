@@ -104,14 +104,18 @@
 	var map = new BMap.Map("imap");
 	map.centerAndZoom(new BMap.Point(102.954, 34.340), 5);
 	map.enableScrollWheelZoom(true);
-	var size = new BMap.Size(5, 5);
 	map.addControl(new BMap.CityListControl({
 	    anchor: BMAP_ANCHOR_TOP_LEFT,
-	    offset: size,
+	    offset: new BMap.Size(5, 5),
 	}));
 	map.addControl(new BMap.NavigationControl({
-		anchor: BMAP_ANCHOR_TOP_RIGHT,
-		offset: size,
+		anchor: BMAP_ANCHOR_BOTTOM_RIGHT,
+		offset: new BMap.Size(5, 58),
+		type: BMAP_NAVIGATION_CONTROL_ZOOM
+	}));
+	map.addControl(new BMap.PanoramaControl({
+		anchor: BMAP_ANCHOR_BOTTOM_RIGHT,
+		offset: new BMap.Size(5, 5),
 	}));
 
 	function CustomControl() {

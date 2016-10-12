@@ -74,7 +74,8 @@ header {
   color: #F26E01;
 }
 .map-container .container #imap .custom-block {
-  background-color: #74D3E7;
+  background-color: #74d2e9;
+  opacity: .9;
   padding: 2px 10px 10px;
   color: #fff;
   line-height: 20px;
