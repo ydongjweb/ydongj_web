@@ -21,9 +21,9 @@
 		    <input type="text" class="form-control date-input" id="dateEnd" readonly="readonly">
 			<button class="btn btn-default" id="queryBtn">查询</button>
 		</div>
-		<div id="imap"></div>
 		
 	</div>
+	<div id="imap"></div>
 	
 	<script src="js/jquery-3.1.0.min.js"></script>
 	<script type="text/javascript" src="js/jquery-ui.min.js"></script>
@@ -102,7 +102,7 @@
 
 	// 百度地图API功能	
 	var map = new BMap.Map("imap");
-	map.centerAndZoom(new BMap.Point(102.954, 34.340), 5);
+	map.centerAndZoom(new BMap.Point(102.954, 34.340), 6);
 	map.enableScrollWheelZoom(true);
 	map.addControl(new BMap.CityListControl({
 	    anchor: BMAP_ANCHOR_TOP_LEFT,
