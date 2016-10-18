@@ -32,63 +32,21 @@
 	<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=Pe2bpfL1ct54kQLPZjGvzzRqIgKA7Kda"></script>
 	<script type="text/javascript">
 
-	var startDate = endDate = new Date().Format('yyyy-MM-dd'),
-		timeCommon = ' 00:00:00',
-		type = 1,
+	var startDate = '2015-01-01',
+		endDate = new Date().Format('yyyy-MM-dd'),
 		timer = null;
-
-	$('.btn-day, #queryBtn').on('click', function() {
-		var now = new Date(),
-			v = $(this).data('v');
-		type = v;
-
-		switch(v) {
-			case 1 : 
-				startDate = now.Format('yyyy-MM-dd');
-				endDate = addDate(now, 1);
-				break;
-			case 2 : 
-				startDate = endDate = addDate(now, -1);
-				break;
-			case 3 : 
-				startDate = addDate(now, -7);
-				endDate = now.Format('yyyy-MM-dd');
-				break;
-			case 4 : 
-				startDate = addDate(now, -30);
-				endDate = now.Format('yyyy-MM-dd');
-				break;
-			default: 
-				startDate = $('#dateStart').val();
-				endDate = $('#dateEnd').val();
-		}
-
-		$('#dateStart').val(startDate);
-		$('#dateEnd').val(endDate);
-		$(this).addClass('btn-info').siblings().removeClass('btn-info');
-		rendQuery();
-	})
 
 	function rendQuery() {
 		var nowStoreId = $('.BMap_bubble_content').find('.marker-span').data('sid');
 		if (!nowStoreId) {
 			return;
 		}
-		var ajaxData = '';
-		if (type == 1 || type == 2) {
-			ajaxData = {
-				"beginTime": startDate,
-	    		"endTime": endDate,
-	    		"storeId": nowStoreId
-			};
-		} else {
-			ajaxData = {
-				"beginTime": startDate + timeCommon,
-	    		"endTime": endDate + timeCommon,
-	    		"storeId": nowStoreId
-			};
-		}
-
+		var ajaxData = {
+			"beginTime": startDate,
+    		"endTime": endDate,
+    		"storeId": nowStoreId
+		};
+		
 		getByAjax({
 			url: 'api/trade/store',
 			data: JSON.stringify(ajaxData),
@@ -204,20 +162,11 @@
 				span = '<span class="marker-span">' + content + '</span>';
 				openInfo(span,e);
 			} else {
-				var ajaxData = '';
-				if (type == 1 || type == 2) {
-					ajaxData = {
-						"beginTime": startDate,
-			    		"endTime": endDate,
-			    		"storeId": objItem.storeId
-					};
-				} else {
-					ajaxData = {
-						"beginTime": startDate + timeCommon,
-			    		"endTime": endDate + timeCommon,
-			    		"storeId": objItem.storeId
-					};
-				}
+				var ajaxData = {
+					"beginTime": startDate,
+		    		"endTime": endDate,
+		    		"storeId": objItem.storeId
+				};
 
 				getByAjax({
 					url: 'api/trade/store',
@@ -242,18 +191,11 @@
 	}
 
 	function getSummaryTrade() {
-		var ajaxData = '';
-		if (type == 1 || type == 2) {
-			ajaxData = {
-				"beginTime": startDate,
-	    		"endTime": endDate
-			};
-		} else {
-			ajaxData = {
-				"beginTime": startDate + timeCommon,
-	    		"endTime": endDate + timeCommon
-			};
-		}
+		var ajaxData = {
+			"beginTime": startDate,
+    		"endTime": endDate
+		};
+
 		getByAjax({
 			url: 'api/trade/summary',
 			data: JSON.stringify(ajaxData),
