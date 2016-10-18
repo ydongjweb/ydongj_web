@@ -9,7 +9,7 @@
 	<title>门店地理位置</title>
 </head>
 <body class="map-container">
-	<div class="container">
+	<!-- <div class="container">
 		<header>门店使用图</header>
 		<div class="form-inline" role="form">
 			<button data-v='1' class="btn btn-day btn-default btn-info">今天</button>
@@ -22,7 +22,7 @@
 			<button class="btn btn-default" id="queryBtn">查询</button>
 		</div>
 		
-	</div>
+	</div> -->
 	<div id="imap"></div>
 	
 	<script src="js/jquery-3.1.0.min.js"></script>
@@ -71,6 +71,9 @@
 
 	function rendQuery() {
 		var nowStoreId = $('.BMap_bubble_content').find('.marker-span').data('sid');
+		if (!nowStoreId) {
+			return;
+		}
 		var ajaxData = '';
 		if (type == 1 || type == 2) {
 			ajaxData = {
@@ -102,7 +105,7 @@
 
 	// 百度地图API功能	
 	var map = new BMap.Map("imap");
-	map.centerAndZoom(new BMap.Point(102.954, 34.340), 6);
+	map.centerAndZoom(new BMap.Point(105.954, 34.340), 6);
 	map.enableScrollWheelZoom(true);
 	map.addControl(new BMap.CityListControl({
 	    anchor: BMAP_ANCHOR_TOP_LEFT,
@@ -152,6 +155,15 @@
 	var myCustomControl = new CustomControl();
 	map.addControl(myCustomControl);
 
+	var myIconBlue = new BMap.Symbol(BMap_Symbol_SHAPE_POINT, {
+	    fillColor: "#0075C7",//填充颜色
+	    fillOpacity: 0.8//填充透明度
+	});
+	var myIconRed = new BMap.Symbol(BMap_Symbol_SHAPE_POINT, {
+	    fillColor: "#ED2D2D",//填充颜色
+	    fillOpacity: 0.8//填充透明度
+	})
+
 	function getPoint() {
 		getByAjax({
 			url: 'api/address/store',
@@ -159,8 +171,13 @@
 			success: function(data) {
 				if (data.code == 1) {
 					for(var i = 0, len = data.datas.length; i < len; i++){
-						var item = data.datas[i];
-						var marker = new BMap.Marker(new BMap.Point(item.longitude,item.latitude));  // 创建标注
+						var item = data.datas[i],
+							marker = null;
+						if (item.storeId != null) {
+							marker = new BMap.Marker(new BMap.Point(item.longitude,item.latitude), {icon: myIconRed});  // 创建标注
+						} else {
+							marker = new BMap.Marker(new BMap.Point(item.longitude,item.latitude), {icon: myIconBlue});  // 创建标注
+						}
 						map.addOverlay(marker);               // 将标注添加到地图中
 						addClickHandler(item, marker);
 					}
@@ -179,32 +196,41 @@
 	function addClickHandler(objItem, marker){
 		marker.addEventListener("click", markerHandler);
 		function markerHandler(e){
-			var ajaxData = '';
-			if (type == 1 || type == 2) {
-				ajaxData = {
-					"beginTime": startDate,
-		    		"endTime": endDate,
-		    		"storeId": objItem.storeId
-				};
-			} else {
-				ajaxData = {
-					"beginTime": startDate + timeCommon,
-		    		"endTime": endDate + timeCommon,
-		    		"storeId": objItem.storeId
-				};
-			}
+			var content = '',
+				span = '';
 
-			getByAjax({
-				url: 'api/trade/store',
-				data: JSON.stringify(ajaxData),
-				success: function(data) {
-					if (data.code == 1) {
-						var content = '地址: ' + objItem.address + '<br> 订单数: <span class="marker-orderCount">' + data.datas.orderCount + '</span> <br> 交易金额: <span class="marker-sumAmount">￥' + formatCurrency(data.datas.sumAmount) + '</span>',
-							span = '<span class="marker-span" data-sid="' + objItem.storeId +'">' + content + '</span>';
-						openInfo(span,e);
-					}
+			if (!objItem.storeId) {
+				content = '<p>PAAS平台用户</p><p>地址：' + objItem.address + '</p>';
+				span = '<span class="marker-span">' + content + '</span>';
+				openInfo(span,e);
+			} else {
+				var ajaxData = '';
+				if (type == 1 || type == 2) {
+					ajaxData = {
+						"beginTime": startDate,
+			    		"endTime": endDate,
+			    		"storeId": objItem.storeId
+					};
+				} else {
+					ajaxData = {
+						"beginTime": startDate + timeCommon,
+			    		"endTime": endDate + timeCommon,
+			    		"storeId": objItem.storeId
+					};
 				}
-			})
+
+				getByAjax({
+					url: 'api/trade/store',
+					data: JSON.stringify(ajaxData),
+					success: function(data) {
+						if (data.code == 1) {
+							content = '店铺名称: ' + objItem.address + '<br> 支付笔数: <span class="marker-orderCount">' + data.datas.orderCount + '</span> <br> 支付金额: <span class="marker-sumAmount">￥' + formatCurrency(data.datas.sumAmount) + '</span>';
+							span = '<span class="marker-span" data-sid="' + objItem.storeId +'">' + content + '</span>';
+							openInfo(span,e);
+						}
+					}
+				})
+			}
 		}
 	}
 
